@@ -6,6 +6,17 @@ import * as Yup from 'yup';
 import { accountService, alertService } from '@/_services';
 
 function Login({ history, location }) {
+
+    // Funcionando para pegar o csft token
+    const [csrf, setCsrf] = useState("");
+    useEffect(() => {
+        fetch('http://localhost:8000/csrf/')
+        .then((response) => response.json())
+        .then(data=> {
+            setCsrf(data.csrftoken)
+        });
+    }, [])
+
     const initialValues = {
         email: '',
         password: ''

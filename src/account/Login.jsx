@@ -10,7 +10,7 @@ function Login({ history, location }) {
     // Funcionando para pegar o csft token
     const [csrf, setCsrf] = useState("");
     useEffect(() => {
-        fetch('http://localhost:8000/csrf/')
+        fetch('http://localhost:8000/csrf/', {credentials: "include"})
         .then((response) => response.json())
         .then(data=> {
             setCsrf(data.csrftoken)
@@ -31,7 +31,7 @@ function Login({ history, location }) {
 
     function onSubmit({ email, password }, { setSubmitting }) {
         alertService.clear();
-        accountService.login(email, password)
+        accountService.login(email, password, csrf)
             .then(() => {
                 const { from } = location.state || { from: { pathname: "/" } };
                 history.push(from);

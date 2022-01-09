@@ -16,11 +16,15 @@ function get(url) {
   return fetch(url, requestOptions).then(handleResponse);
 }
 
-function post(url, body) {
+function post(url, body, csrf) {
   const requestOptions = {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader(url) },
-    withCredentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrf,
+      ...authHeader(url),
+    },
+    credentials: "include",
     body: JSON.stringify(body),
   };
   return fetch(url, requestOptions).then(handleResponse);

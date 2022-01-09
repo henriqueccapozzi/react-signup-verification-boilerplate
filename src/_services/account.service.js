@@ -26,13 +26,40 @@ export const accountService = {
   },
 };
 
-function login(email, password) {
-  return fetchWrapper.post(`${baseUrl}/authenticate`, { email, password }).then((user) => {
-    // publish user to subscribers and start timer to refresh token
-    userSubject.next(user);
-    startRefreshTokenTimer();
-    return user;
-  });
+function login(email, password, csrftoken) {
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+  var urlencoded = new URLSearchParams();
+  urlencoded.append("csrfmiddlewaretoken", csrftoken);
+  urlencoded.append("login", "teste-1");
+  urlencoded.append("password", "12345678");
+
+  var requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    credentials: "include",
+    body: urlencoded,
+    redirect: "follow",
+  };
+
+  return fetch(`${baseUrl}/login/`, requestOptions)
+    .then((response) => response.text())
+    .then((user) => {
+      console.log(user);
+      // publish user to subscribers and start timer to refresh token
+      userSubject.next(user);
+      startRefreshTokenTimer();
+      return user;
+    });
+  // return fetchWrapper
+  //   .post(`${baseUrl}/login/`, { username: email, password, csrfmiddlewaretoken: csrftoken }, csrftoken)
+  //   .then((user) => {
+  //     // publish user to subscribers and start timer to refresh token
+  //     userSubject.next(user);
+  //     startRefreshTokenTimer();
+  //     return user;
+  //   });
 }
 
 function logout() {

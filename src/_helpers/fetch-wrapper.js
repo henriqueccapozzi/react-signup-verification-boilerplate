@@ -8,12 +8,13 @@ export const fetchWrapper = {
   delete: _delete,
 };
 
-function get(url) {
+function get(url, overwritenOptions) {
   const requestOptions = {
     method: "GET",
+    credentials: "include",
     headers: authHeader(url),
   };
-  return fetch(url, requestOptions).then(handleResponse);
+  return fetch(url, overwritenOptions ? overwritenOptions : requestOptions).then(handleResponse);
 }
 
 function post(url, body, csrf) {

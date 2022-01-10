@@ -9,6 +9,8 @@ import { Profile } from '@/profile';
 import { Admin } from '@/admin';
 import { Account } from '@/account';
 
+import UserList from '@/api/users';
+
 function App() {
     const { pathname } = useLocation();  
     const [user, setUser] = useState({});
@@ -26,6 +28,7 @@ function App() {
                 <Redirect from="/:url*(/+)" to={pathname.slice(0, -1)} />
                 <PrivateRoute exact path="/" component={Home} />
                 <PrivateRoute path="/profile" component={Profile} />
+                <PrivateRoute path="/users" component={UserList} />
                 <PrivateRoute path="/admin" roles={[Role.Admin]} component={Admin} />
                 <Route path="/account" component={Account} />
                 <Redirect from="*" to="/" />

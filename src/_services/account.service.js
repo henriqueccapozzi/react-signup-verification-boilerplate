@@ -1,10 +1,12 @@
 import { BehaviorSubject } from "rxjs";
+import Cookie from "js-cookie";
 
 import config from "config";
 import { fetchWrapper, history } from "@/_helpers";
 
 const userSubject = new BehaviorSubject(null);
-const baseUrl = `${config.apiUrl}/accounts`;
+const baseUrl = `${config.apiUrl}`;
+const baseAccountUrl = `${config.apiUrl}/accounts`;
 
 export const accountService = {
   login,
@@ -43,39 +45,50 @@ function login(email, password, csrftoken) {
     redirect: "follow",
   };
 
-  return fetch(`${baseUrl}/login/`, requestOptions)
+  return fetch(`${baseAccountUrl}/login/`, requestOptions)
     .then((response) => response.text())
-    .then((user) => {
-      console.log(user);
+    .then((userInfo) => {
+      const user = JSON.parse(userInfo);
+      // const {firstName, lastName, email} = userInfo
+      console.log(user.userInfo);
       // publish user to subscribers and start timer to refresh token
-      userSubject.next(user);
+      userSubject.next(user.userInfo);
       startRefreshTokenTimer();
-      return user;
+      return userInfo;
     });
-  // return fetchWrapper
-  //   .post(`${baseUrl}/login/`, { username: email, password, csrfmiddlewaretoken: csrftoken }, csrftoken)
-  //   .then((user) => {
-  //     // publish user to subscribers and start timer to refresh token
-  //     userSubject.next(user);
-  //     startRefreshTokenTimer();
-  //     return user;
-  //   });
 }
 
 function logout() {
   // revoke token, stop refresh timer, publish null to user subscribers and redirect to login page
-  fetchWrapper.post(`${baseUrl}/revoke-token`, {});
+  fetchWrapper.post(`${baseAccountUrl}/logout/`, {}, Cookie.get("csrftoken"));
   stopRefreshTokenTimer();
   userSubject.next(null);
   history.push("/account/login");
 }
 
 function refreshToken() {
-  return fetchWrapper.post(`${baseUrl}/refresh-token`, {}).then((user) => {
+  var requestOptions = {
+    credentials: "include",
+  };
+  fetch(`${baseUrl}/auth/`, requestOptions)
+    .then((response) => response.text())
+    .then((res) => {
+      const { isAuthenticated } = JSON.parse(res);
+      if (isAuthenticated) {
+        // console.log("User is authenticated in the backend");
+        fetchWrapper.get(`${baseUrl}/dashboard/`).then(({ userInfo }) => {
+          userSubject.next(userInfo);
+          history.push("/");
+        });
+      }
+    });
+
+  return fetchWrapper.get(`${baseUrl}/csrf/`, requestOptions).then((responseData) => {
+    // console.log(user);
     // publish user to subscribers and start timer to refresh token
-    userSubject.next(user);
-    startRefreshTokenTimer();
-    return user;
+    // userSubject.next(user);
+    // startRefreshTokenTimer();
+    return responseData;
   });
 }
 
@@ -140,11 +153,12 @@ let refreshTokenTimeout;
 
 function startRefreshTokenTimer() {
   // parse json object from base64 encoded jwt token
-  const jwtToken = JSON.parse(atob(userSubject.value.jwtToken.split(".")[1]));
+  // const jwtToken = JSON.parse(atob(userSubject.value.jwtToken.split(".")[1]));
 
-  // set a timeout to refresh the token a minute before it expires
-  const expires = new Date(jwtToken.exp * 1000);
-  const timeout = expires.getTime() - Date.now() - 60 * 1000;
+  // // set a timeout to refresh the token a minute before it expires
+  // const expires = new Date(jwtToken.exp * 1000);
+  // const timeout = expires.getTime() - Date.now() - 60 * 1000;
+  const timeout = 60 * 1000;
   refreshTokenTimeout = setTimeout(refreshToken, timeout);
 }
 
